@@ -1,6 +1,5 @@
-(ns server-client.hotkeys)
-(import [com.tulskiy.keymaster.common HotKey MediaKey Provider HotKeyListener])
-(import [javax.swing KeyStroke])
+(ns server-client.hotkeys
+    (:use [keymaster.core :only [make-provider register]]))
 
 (def socket (atom nil))
 
@@ -11,14 +10,8 @@
 (defn- press [ button ]
     (.send @socket button))
 
-(defn- get-listener [button]
-   (proxy [HotKeyListener] []
-            (onHotKey [event]
-                (press button))))
-
 (defn- make-keystroke [keyname button]
-    [(KeyStroke/getKeyStroke (str "ctrl " keyname))
-    button])
+    [(str "ctrl " keyname) button])
 
 (def all-hotkeys
     (map make-keystroke
@@ -26,8 +19,8 @@
         ["play" "forward" "back"]))
 
 (defn init-hotkeys []
-    (let [provider (Provider/getCurrentProvider  false)]
+    (let [provider (make-provider)]
         (doseq [[hotkey button] all-hotkeys]
-            (.register provider
+            (register provider
                 hotkey
-                (get-listener button)))))
+                (partial press button)))))
