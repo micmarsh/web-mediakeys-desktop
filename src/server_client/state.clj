@@ -25,7 +25,7 @@
 
 (defn- initial-values []
     "Returns initial {keystroke, listener} atoms . Make based on a file later"
-    (zipmap (map make-keystroke ["SPACE"]))
+    ());(zipmap (map make-keystroke ["SPACE"]))
 
 (def key-records
     (zipmap [:play :back :forward]

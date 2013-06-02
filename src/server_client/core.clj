@@ -1,5 +1,5 @@
 (ns server-client.core
-    (:use [server-client.hotkeys :only [bind-socket init-hotkeys]])
+    (:use [server-client.state :only [bind-socket!]])
     (:require [clojure.data.json :as json])
     (:import [org.webbitserver WebServers WebSocketHandler]))
 
@@ -11,11 +11,10 @@
                 (proxy [WebSocketHandler] []
                     (onOpen [socket] (do
                             (println "opened" socket)
-                            (bind-socket socket)))
+                            (bind-socket! socket)))
                     (onClose [socket] (do
                             (println "closed" socket)
                             ()))
                     (onMessage [c j] ())))
             (.start))
-        (init-hotkeys)
         (println "Started socket server on port" port)))
