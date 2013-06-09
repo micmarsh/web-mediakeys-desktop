@@ -1,32 +1,15 @@
 (ns server-client.state
-    (:use [marshmacros.coffee :only [cofmap]]))
-(import [com.tulskiy.keymaster.common Provider HotKeyListener])
-(import [javax.swing KeyStroke])
+    (:use [marshmacros.coffee :only [cofmap]]
+          [server-client.socket :only [press!]]
+          server-client.java))
 
-(def socket (atom nil))
-
-(defn bind-socket! [socket]
-    (println "lulz"))
-
-(defn- press [ button ]
-    (.send @socket button))
-;^should be in socket namespace
-
-(defn- make-action-listener [button]
-   (proxy [HotKeyListener] []
-            (onHotKey [event]
-                (press button))))
-
-(defn- make-keystroke [keystroke]
-    (KeyStroke/getKeyStroke keystroke))
-
-(def current-provider
-    (Provider/getCurrentProvider false))
 
 (defn- initial-values []
     "Returns initial {keystroke, listener} atoms . Make based on a file later"
-    (let [keystrokes (map make-keystroke (map #(str "ctrl " %) ["SPACE" "RIGHT" "LEFT"]))
-          listeners  (map make-action-listener ["play" "back" "forward"])]
+    (let [buttons ["play" "back" "forward"]
+          button-actions (map (fn [button] #(press! button)) buttons)
+          keystrokes (map make-keystroke (map #(str "ctrl " %) ["SPACE" "RIGHT" "LEFT"]))
+          listeners  (map make-action-listener  button-actions)]
           (map #(atom {:keystroke %1 :listener %2})
             keystrokes
             listeners)))
@@ -35,17 +18,17 @@
     (zipmap [:play :back :forward]
             (initial-values)))
 
-(defn update-key-record! [action record]
+(defn- update-key-record! [action record]
     (let [old-record (action key-records)]
         (reset! old-record record)))
 
-(defn register-all-hotkeys! []
+(defn- register-all-hotkeys! []
     (doseq [[action atom] key-records]
     (let [{:keys [keystroke listener]} @atom]
         (if-not (= nil keystroke)
             (.register current-provider keystroke, listener)))))
 
-(defn register-in-provider! [{:keys [keystroke listener]}]
+(defn- register-in-provider! [{:keys [keystroke listener]}]
     (do (.reset current-provider)
         (register-all-hotkeys!)))
 
@@ -56,4 +39,7 @@
     (update-key-record! action key-and-listener)
     (register-in-provider! key-and-listener)))
 
-(register-all-hotkeys!)
+(defn initialize-hotkeys! []
+    (register-all-hotkeys!))
+
+
